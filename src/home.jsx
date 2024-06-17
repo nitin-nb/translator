@@ -443,7 +443,7 @@ export default function Home() {
           {loader === true ? (
             <Box
               sx={{
-                minHeight: "25vh",
+                minHeight: "27vh",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
@@ -452,7 +452,7 @@ export default function Home() {
               <CircularProgress size={80} sx={{ zIndex: 999 }} />
             </Box>
           ) : (
-            <Box sx={{ minHeight: "25vh" }}>
+            <Box sx={{ minHeight: "27vh" }}>
               <Typography
                 sx={{
                   fontSize: "1rem",
