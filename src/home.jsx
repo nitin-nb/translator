@@ -4,6 +4,7 @@ import {
   Button,
   CircularProgress,
   Grid,
+  MenuItem,
   Snackbar,
   TextField,
   Typography,
@@ -33,21 +34,38 @@ export default function Home() {
       textTransform: "initial",
       borderRadius: 3,
     },
+    select: {
+      fontSize: "0.875rem",
+      fontWeight: 700,
+      color: "#4D5562",
+      textTransform: "initial",
+    },
   };
 
   const [language, setLanguage] = useState("en");
   const [transLanguage, setTransLanguage] = useState("fr");
-  const [textFrom, setTextFrom] = useState("Hello, How are you");
+  const [textFrom, setTextFrom] = useState("");
   const [resultText, setResultText] = useState("");
   const [loader, setLoader] = useState(false);
   const [toastOpen, setToastOpen] = useState(false);
   const [action, setAction] = useState(false);
+  const [lang, setLang] = useState([]); // Initialize with an empty array
 
   const textFieldRef = useRef(null);
 
   const handleOnChange = (e) => {
     const textData = e.target.value;
     setTextFrom(textData);
+  };
+
+  const handleLanguageChange1 = (event) => {
+    const selectedCode1 = event.target.value;
+    setLanguage(selectedCode1);
+  };
+
+  const handleLanguageChange2 = (event) => {
+    const selectedCode2 = event.target.value;
+    setTransLanguage(selectedCode2);
   };
 
   const handleSubmit = async () => {
@@ -68,6 +86,35 @@ export default function Home() {
     setLoader(false);
   };
 
+  const getLanguages = async () => {
+    try {
+      let result = await axios.get("https://restcountries.com/v3.1/all");
+      const languages = {};
+
+      // Iterate through the countries to extract languages
+      result.data.forEach((country) => {
+        if (country.languages) {
+          Object.entries(country.languages).forEach(([code, name]) => {
+            if (!languages[code]) {
+              languages[code] = name;
+            }
+          });
+        }
+      });
+
+      // Convert languages object to an array
+      const languageList = Object.entries(languages).map(([code, name]) => ({
+        code,
+        name,
+      }));
+      setLang(languageList);
+
+      console.log(languageList, "result");
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
   const handleSwitch = () => {
     let tempLang = language;
     let textSet = textFrom;
@@ -78,17 +125,17 @@ export default function Home() {
   };
 
   const handleCopy = (id) => {
-      navigator.clipboard
-        .writeText(id)
-        .then(() => {
-          setAction(true);
-          setToastOpen(true);
-        })
-        .catch((err) => {
-          setAction(false);
-          setToastOpen(true);
-          console.error("Error in copying text: ", err);
-        });
+    navigator.clipboard
+      .writeText(id)
+      .then(() => {
+        setAction(true);
+        setToastOpen(true);
+      })
+      .catch((err) => {
+        setAction(false);
+        setToastOpen(true);
+        console.error("Error in copying text: ", err);
+      });
   };
 
   const handleClose = () => {
@@ -103,9 +150,11 @@ export default function Home() {
   const handleCopyToTextField = () => {
     setTextFrom(resultText);
     handleCopy(textFrom);
-  }
+  };
 
-  // const { speak } = useSpeechSynthesis();
+  useEffect(() => {
+    getLanguages();
+  }, []);
 
   return (
     <Box
@@ -151,7 +200,7 @@ export default function Home() {
             }}
             m={1}
           >
-            <Typography sx={styles.buttons}>Detected Language</Typography>
+            {/* <Typography sx={styles.buttons}>Detected Language</Typography> */}
             <Button
               sx={language === "en" ? styles.activeButton : styles.buttons}
               onClick={() => setLanguage("en")}
@@ -164,12 +213,31 @@ export default function Home() {
             >
               French
             </Button>
-            <Button
-              sx={language === "es" ? styles.activeButton : styles.buttons}
-              onClick={() => setLanguage("es")}
-            >
-              Spanish
-            </Button>
+            <TextField
+                id="lang"
+                select
+                value={language}
+                onChange={handleLanguageChange1}
+                variant="standard"
+                InputProps={{
+                  disableUnderline: true,
+                  sx: {...styles.activeButton}
+                }}
+                SelectProps={{
+                  sx: {...styles.activeButton,
+                    padding: 1,
+                    ".MuiSelect-icon": {
+                      color: "white",
+                    },
+                  },
+                }}
+              ><MenuItem >Select</MenuItem>
+                {lang.map((option) => (
+                  <MenuItem key={option.code} value={option.code}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+              </TextField>
           </Box>
           <Box
             sx={{
@@ -187,6 +255,7 @@ export default function Home() {
               fullWidth
               multiline
               autoFocus
+              placeholder="Enter your text"
               InputProps={{
                 disableUnderline: true,
                 sx: {
@@ -316,14 +385,31 @@ export default function Home() {
               >
                 French
               </Button>
-              <Button
-                sx={
-                  transLanguage === "es" ? styles.activeButton : styles.buttons
-                }
-                onClick={() => setTransLanguage("es")}
+              <TextField
+                id="setLang"
+                select
+                value={transLanguage}
+                onChange={handleLanguageChange2}
+                variant="standard"
+                InputProps={{
+                  disableUnderline: true,
+                  sx: {...styles.activeButton}
+                }}
+                SelectProps={{
+                  sx: {...styles.activeButton,
+                    padding: 1,
+                    ".MuiSelect-icon": {
+                      color: "white",
+                    },
+                  },
+                }}
               >
-                Spanish
-              </Button>
+                {lang.map((option) => (
+                  <MenuItem key={option.code} value={option.code}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Box>
             <Box
               display={"flex"}
@@ -375,7 +461,7 @@ export default function Home() {
                   borderRadius: 1,
                 }}
               >
-                {resultText}
+                {textFrom.length > 0 ? resultText : "Enter the text to translate"}
               </Typography>
             </Box>
           )}
@@ -421,7 +507,7 @@ export default function Home() {
             open={toastOpen}
             autoHideDuration={6000}
             onClose={handleClose}
-            anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
             <Alert
               onClose={handleClose}
